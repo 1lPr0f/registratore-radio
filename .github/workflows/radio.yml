@@ -1,0 +1,80 @@
+name: Radio Recorder
+
+on:
+  schedule:
+
+    # 23 → 28 febbraio (11:00 UTC = 12:00 Italia)
+    - cron: '0 11 23-28 2 *'
+
+    # 1 marzo
+    - cron: '0 11 1 3 *'
+
+  workflow_dispatch:
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y ffmpeg python3-pip
+        pip install google-api-python-client google-auth
+
+    - name: Record Stream
+      run: |
+
+        ffmpeg -y \
+        -i http://icecast.di.unipmn.it:8000/6023hq \
+        -t 9000 \
+        -c copy radio-$(date +%F).mp3
+
+    - name: Upload to Google Drive
+      env:
+        GDRIVE_KEY: ${{ secrets.GDRIVE_KEY }}
+
+      run: |
+
+        echo "$GDRIVE_KEY" > key.json
+
+        python3 <<EOF
+
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+        import os
+
+        SCOPES=['https://www.googleapis.com/auth/drive']
+
+        creds = service_account.Credentials.from_service_account_file(
+        'key.json',
+        scopes=SCOPES
+        )
+
+        service = build('drive','v3',credentials=creds)
+
+        FOLDER_ID="1OSvsjA-ZD_upfcueztqKn00YQP0mE79S"
+
+        filename = [f for f in os.listdir('.') if f.endswith('.mp3')][0]
+
+        file_metadata={
+        'name':filename,
+        'parents':[FOLDER_ID]
+        }
+
+        media=MediaFileUpload(
+        filename,
+        mimetype='audio/mpeg'
+        )
+
+        service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields='id'
+        ).execute()
+
+        print("UPLOAD COMPLETATO")
+
+        EOF
