@@ -30,33 +30,33 @@ jobs:
           echo "$GDRIVE_KEY" > key.json
 
           python3 <<EOF
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-import os
+          from google.oauth2 import service_account
+          from googleapiclient.discovery import build
+          from googleapiclient.http import MediaFileUpload
+          import os
 
-SCOPES=['https://www.googleapis.com/auth/drive']
+          SCOPES=['https://www.googleapis.com/auth/drive']
 
-creds=service_account.Credentials.from_service_account_file(
-'key.json',scopes=SCOPES)
+          creds=service_account.Credentials.from_service_account_file(
+          'key.json',scopes=SCOPES)
 
-service=build('drive','v3',credentials=creds)
+          service=build('drive','v3',credentials=creds)
 
-folder_name="RegistrazioniRadio"
+          folder_name="RegistrazioniRadio"
 
-query=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'"
+          query=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'"
 
-folder=service.files().list(q=query,fields="files(id)").execute()
+          folder=service.files().list(q=query,fields="files(id)").execute()
 
-folder_id=folder['files'][0]['id']
+          folder_id=folder['files'][0]['id']
 
-file=[f for f in os.listdir('.') if f.endswith('.mp3')][0]
+          file=[f for f in os.listdir('.') if f.endswith('.mp3')][0]
 
-media=MediaFileUpload(file,resumable=True)
+          media=MediaFileUpload(file,resumable=True)
 
-service.files().create(
-body={'name':file,'parents':[folder_id]},
-media_body=media).execute()
+          service.files().create(
+          body={'name':file,'parents':[folder_id]},
+          media_body=media).execute()
 
-print("UPLOAD OK")
-EOF
+          print("UPLOAD OK")
+          EOF
