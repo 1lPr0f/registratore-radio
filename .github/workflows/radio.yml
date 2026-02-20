@@ -19,7 +19,7 @@ jobs:
       - name: Record stream
         run: |
           ffmpeg -y \
-          -i http://icecast.di.unipmn.it:8000/6023hifi \
+          -i http://icecast.di.unipmn.it:8000/6023hq \
           -t 9000 \
           -c copy radio-$(date +%F).mp3
 
